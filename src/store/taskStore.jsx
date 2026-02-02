@@ -4,6 +4,24 @@ import { useAuth } from './authStore';
 
 const TaskContext = createContext();
 
+// Helper functions for localStorage persistence
+const getStoredTasks = (userId) => {
+  try {
+    const stored = localStorage.getItem(`focusforge_tasks_${userId}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const storeTasks = (userId, tasks) => {
+  try {
+    localStorage.setItem(`focusforge_tasks_${userId}`, JSON.stringify(tasks));
+  } catch (e) {
+    console.warn('Failed to store tasks in localStorage:', e);
+  }
+};
+
 export const TaskProvider = ({ children }) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
@@ -14,9 +32,19 @@ export const TaskProvider = ({ children }) => {
     setLoading(true);
     try {
       const data = await taskApi.getAll();
-      setTasks(data);
+      // Merge with localStorage to preserve completed status
+      const storedTasks = user ? getStoredTasks(user.id) : [];
+      const mergedTasks = data.map(task => {
+        const stored = storedTasks.find(st => st.id === task.id);
+        return stored ? { ...task, completed: stored.completed, completedAt: stored.completedAt } : task;
+      });
+      setTasks(mergedTasks);
+      if (user) storeTasks(user.id, mergedTasks);
       setError(null);
     } catch (err) {
+      // Fallback to localStorage if API fails
+      const storedTasks = user ? getStoredTasks(user.id) : [];
+      setTasks(storedTasks);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -28,7 +56,9 @@ export const TaskProvider = ({ children }) => {
       console.log('Adding task:', taskData);
       const newTask = await taskApi.create(taskData);
       console.log('Task created:', newTask);
-      setTasks([...tasks, newTask]);
+      const updatedTasks = [...tasks, newTask];
+      setTasks(updatedTasks);
+      if (user) storeTasks(user.id, updatedTasks);
     } catch (err) {
       console.error('Add Task Error:', err);
       setError(err.response?.data?.message || err.message);
@@ -40,29 +70,39 @@ export const TaskProvider = ({ children }) => {
     if (!task) return;
     
     const newCompletedStatus = !task.completed;
+    const completedAt = newCompletedStatus ? (task.completedAt || new Date().toISOString()) : null;
+    
+    // Optimistically update
+    const updatedTasks = tasks.map(t => 
+      t.id === id ? { 
+        ...t, 
+        completed: newCompletedStatus,
+        completedAt: completedAt
+      } : t
+    );
+    setTasks(updatedTasks);
+    
+    // Persist to localStorage
+    if (user) storeTasks(user.id, updatedTasks);
     
     try {
+      // Try to update backend
       await taskApi.update(id, { 
         completed: newCompletedStatus,
-        completedAt: newCompletedStatus ? new Date().toISOString() : null
+        completedAt: completedAt
       });
-      // Optimistically update
-      setTasks(tasks.map(t => 
-        t.id === id ? { 
-          ...t, 
-          completed: newCompletedStatus,
-          completedAt: newCompletedStatus ? new Date().toISOString() : null
-        } : t
-      ));
     } catch (err) {
-      setError(err.message);
+      console.warn('Backend update failed, but localStorage updated:', err.message);
+      // localStorage already has the update, so we're good
     }
   };
 
   const deleteTask = async (id) => {
     try {
       await taskApi.delete(id);
-      setTasks(tasks.filter(t => t.id !== id));
+      const updatedTasks = tasks.filter(t => t.id !== id);
+      setTasks(updatedTasks);
+      if (user) storeTasks(user.id, updatedTasks);
     } catch (err) {
       setError(err.message);
     }

@@ -5,6 +5,7 @@ import Dashboard from '../components/dashboard/Dashboard';
 import HabitsPage from '../components/habits/HabitsPage';
 import TasksPage from '../components/tasks/TasksPage';
 import AICoachPage from '../components/ai/AICoachPage';
+import SettingsPage from '../components/settings/SettingsPage';
 import Login from '../components/auth/Login';
 import Register from '../components/auth/Register';
 import { useAuth } from '../store/authStore';
@@ -36,6 +37,7 @@ const AppRoutes = () => {
         <Route path="habits" element={<HabitsPage />} />
         <Route path="tasks" element={<TasksPage />} />
         <Route path="ai-coach" element={<AICoachPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         {/* Fallback for unknown routes */}
         <Route path="*" element={<Navigate to="/" />} />
       </Route>

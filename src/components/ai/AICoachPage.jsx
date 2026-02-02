@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Send, Bot, User, BarChart2, RefreshCw, Brain, Lightbulb, AlertTriangle, Clock, Calendar, Trophy } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Sparkles, Send, Bot, User, BarChart2, RefreshCw, Brain, Lightbulb, AlertTriangle, Clock, Calendar, Trophy, CheckCircle, Target } from 'lucide-react';
 import Button from '../common/Button';
 import '../../styles/cards.css';
 import { useHabits } from '../../store/habitStore';
+import { useTasks } from '../../store/taskStore';
 import habitApi from '../../api/habitApi';
 
 const AICoachPage = () => {
@@ -13,12 +14,21 @@ const AICoachPage = () => {
   const [welcomeData, setWelcomeData] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [taskInsights, setTaskInsights] = useState(null);
   const { habits } = useHabits();
+  const { tasks } = useTasks();
 
   // Fetch welcome message on initial load
   useEffect(() => {
     fetchWelcomeMessage();
   }, []);
+
+  // Analyze task data and generate insights
+  useEffect(() => {
+    if (tasks.length > 0) {
+      analyzeTaskData();
+    }
+  }, [tasks]);
 
   const fetchWelcomeMessage = async () => {
     try {
@@ -40,9 +50,91 @@ const AICoachPage = () => {
       setMessages([{
         id: 1,
         sender: 'ai',
-        text: "Hi! I'm your AI coach. I'll share insights from your habits and help you stay on track."
+        text: "Hi! I'm your AI coach. I'll share insights from your habits and tasks and help you stay on track."
       }]);
     }
+  };
+
+  // Analyze task completion patterns
+  const analyzeTaskData = () => {
+    const completedTasks = tasks.filter(t => t.completed);
+    const pendingTasks = tasks.filter(t => !t.completed);
+    const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+    
+    // Count by priority
+    const highPriorityPending = pendingTasks.filter(t => t.priority === 'high').length;
+    const mediumPriorityPending = pendingTasks.filter(t => t.priority === 'medium').length;
+    const lowPriorityPending = pendingTasks.filter(t => t.priority === 'low').length;
+    
+    // Recent completions (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentCompletions = completedTasks.filter(t => {
+      if (!t.completedAt) return false;
+      return new Date(t.completedAt) > oneDayAgo;
+    });
+
+    // Generate insights
+    const insights = [];
+    
+    if (completionRate >= 80 && tasks.length >= 3) {
+      insights.push({
+        type: 'streak',
+        title: 'Task Master!',
+        message: `You've completed ${completionRate}% of your tasks! That's excellent work.`,
+        action: 'Keep up the amazing productivity!'
+      });
+    } else if (completionRate < 30 && tasks.length >= 3) {
+      insights.push({
+        type: 'warning',
+        title: 'Task Focus Needed',
+        message: `Only ${completionRate}% of tasks completed. Let's get you back on track!`,
+        action: 'Try focusing on one task at a time'
+      });
+    }
+    
+    if (highPriorityPending > 0) {
+      insights.push({
+        type: 'warning',
+        title: 'High Priority Tasks Pending',
+        message: `You have ${highPriorityPending} high priority task${highPriorityPending > 1 ? 's' : ''} waiting.`,
+        action: 'Consider tackling the high priority tasks first'
+      });
+    }
+    
+    if (recentCompletions.length >= 3) {
+      insights.push({
+        type: 'streak',
+        title: 'Hot Streak!',
+        message: `You completed ${recentCompletions.length} tasks in the last 24 hours!`,
+        action: 'Ride this momentum!'
+      });
+    }
+    
+    if (pendingTasks.length === 0 && completedTasks.length > 0) {
+      insights.push({
+        type: 'tip',
+        title: 'All Caught Up!',
+        message: 'You have no pending tasks. Great job! Consider adding new goals.',
+        action: 'Add new tasks to keep growing'
+      });
+    }
+    
+    if (completionRate >= 40 && completionRate < 80) {
+      insights.push({
+        type: 'tip',
+        title: 'Good Progress',
+        message: `You're ${completionRate}% through your tasks. Keep pushing!`,
+        action: 'Small steps lead to big achievements'
+      });
+    }
+
+    setTaskInsights({
+      total: tasks.length,
+      completed: completedTasks.length,
+      pending: pendingTasks.length,
+      completionRate,
+      insights
+    });
   };
 
   // Fetch AI suggestions for selected habit
@@ -208,6 +300,67 @@ const AICoachPage = () => {
             {suggestions.suggestions.map(renderSuggestion)}
             {suggestions.summary && (
               <p className="text-sm text-gray-500 mt-3 text-center">{suggestions.summary}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Task Insights Panel */}
+      {taskInsights && (
+        <div className="card mb-4 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Target className="text-blue-500" size={20} />
+              <h3 className="card-title">Task Performance</h3>
+            </div>
+            <div className="text-sm font-bold text-blue-600">
+              {taskInsights.completionRate}% Complete
+            </div>
+          </div>
+          <div className="p-4">
+            {/* Progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div 
+                className="bg-blue-500 h-3 rounded-full transition-all duration-500" 
+                style={{ width: `${taskInsights.completionRate}%` }}
+              />
+            </div>
+            
+            {/* Stats */}
+            <div className="flex justify-between text-sm mb-3">
+              <span className="flex items-center gap-1 text-green-600">
+                <CheckCircle size={14} />
+                {taskInsights.completed} Completed
+              </span>
+              <span className="flex items-center gap-1 text-gray-500">
+                <Target size={14} />
+                {taskInsights.pending} Pending
+              </span>
+              <span className="text-gray-500">
+                {taskInsights.total} Total
+              </span>
+            </div>
+            
+            {/* Task Insights */}
+            {taskInsights.insights.length > 0 && (
+              <div className="mt-3">
+                {taskInsights.insights.map((insight, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`p-2 rounded-lg border mb-2 text-sm ${
+                      insight.type === 'streak' ? 'bg-yellow-50 border-yellow-200' :
+                      insight.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                      'bg-purple-50 border-purple-200'
+                    }`}
+                  >
+                    <p className="font-medium">{insight.title}</p>
+                    <p className="text-gray-600">{insight.message}</p>
+                    {insight.action && (
+                      <p className="text-primary font-medium mt-1">💡 {insight.action}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

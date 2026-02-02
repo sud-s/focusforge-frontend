@@ -1,14 +1,43 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UIContext = createContext();
 
+// Get saved theme from localStorage or default to system preference
+const getInitialTheme = () => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('focusforge_theme');
+    if (saved) return saved;
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+  }
+  return 'light';
+};
+
 export const UIProvider = ({ children }) => {
-  const [activeModal, setActiveModal] = useState(null); // 'createHabit', 'createTask', etc.
+  const [activeModal, setActiveModal] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [theme, setTheme] = useState('light');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('focusforge_notifications') === 'true';
+    }
+    return false;
+  });
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('focusforge_sound') === 'true';
+    }
+    return false;
+  });
+
+  // Apply theme on initial load
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const openModal = (modalName, data = null) => {
     setActiveModal(modalName);
@@ -25,15 +54,35 @@ export const UIProvider = ({ children }) => {
   const toggleTheme = () => {
     setTheme(prev => {
       const newTheme = prev === 'light' ? 'dark' : 'light';
-      // Apply to both html and body to be safe
+      localStorage.setItem('focusforge_theme', newTheme);
       document.documentElement.setAttribute('data-theme', newTheme);
       document.body.setAttribute('data-theme', newTheme);
       return newTheme;
     });
   };
 
-  const toggleNotifications = () => setNotificationsEnabled(prev => !prev);
-  const toggleSound = () => setSoundEnabled(prev => !prev);
+  const setThemeDirect = (newTheme) => {
+    localStorage.setItem('focusforge_theme', newTheme);
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.body.setAttribute('data-theme', newTheme);
+  };
+
+  const toggleNotifications = () => {
+    setNotificationsEnabled(prev => {
+      const newVal = !prev;
+      localStorage.setItem('focusforge_notifications', newVal);
+      return newVal;
+    });
+  };
+  
+  const toggleSound = () => {
+    setSoundEnabled(prev => {
+      const newVal = !prev;
+      localStorage.setItem('focusforge_sound', newVal);
+      return newVal;
+    });
+  };
 
   return (
     <UIContext.Provider value={{ 
@@ -44,7 +93,7 @@ export const UIProvider = ({ children }) => {
       sidebarOpen, 
       toggleSidebar,
       theme,
-      setTheme,
+      setTheme: setThemeDirect,
       toggleTheme,
       notificationsEnabled,
       toggleNotifications,
