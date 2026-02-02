@@ -2,17 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UIContext = createContext();
 
-// Get saved theme from localStorage or default to system preference
+// Get saved theme from localStorage or default to light
 const getInitialTheme = () => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('focusforge_theme');
     if (saved) return saved;
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
   }
-  return 'light';
+  return 'light'; // Default to light mode
 };
 
 export const UIProvider = ({ children }) => {

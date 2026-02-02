@@ -55,6 +55,12 @@ const Dashboard = () => {
   const completedHabitsToday = habits.filter(h => h.completedToday).length;
   const pendingTasks = tasks.filter(t => !t.completed).length;
   
+  // Calculate habit streak from real data
+  const habitStreak = habits.reduce((max, habit) => {
+    // Use current_streak if available, otherwise use a default
+    return Math.max(max, habit.current_streak || 0);
+  }, 0);
+  
   // Calculate simple productivity score
   const productivityScore = Math.round(((completedHabitsToday / (totalHabits || 1)) * 0.5 + (tasks.filter(t => t.completed).length / (tasks.length || 1)) * 0.5) * 100);
 
@@ -69,10 +75,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard 
           title="Habit Streak" 
-          value="12 Days" 
-          subtext="+2 from yesterday" 
-          trend="+12%" 
-          trendDirection="up"
+          value={`${habitStreak} Days`} 
+          subtext={habitStreak > 0 ? 'Keep it going!' : 'Start building streaks'}
+          trend={habitStreak > 0 ? '+1' : '0'}
+          trendDirection={habitStreak > 0 ? 'up' : 'neutral'}
           icon={Activity} 
         />
         <StatsCard 

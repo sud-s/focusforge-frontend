@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, Calendar, Trash2, CheckCircle } from 'lucide-react';
+import { CheckSquare, Calendar, Trash2, CheckCircle, Square } from 'lucide-react';
 import '../../styles/cards.css';
 
 const TaskCard = ({ task, onToggle, onDelete }) => {
@@ -25,39 +25,106 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
   };
 
   return (
-    <div className={`card flex items-center gap-4 p-4 ${task.completed ? 'opacity-75 bg-green-50' : ''}`}>
-      <button 
-        className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors cursor-pointer
-          ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-primary'}`}
+    <div 
+      className="task-card"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '16px',
+        backgroundColor: task.completed ? '#f0fdf4' : 'var(--card-bg)',
+        borderRadius: '12px',
+        border: '1px solid var(--border-color)',
+        marginBottom: '12px',
+        opacity: task.completed ? 0.7 : 1,
+        transition: 'all 0.2s ease'
+      }}
+    >
+      {/* Checkbox Button */}
+      <button
         onClick={() => onToggle(task.id)}
+        style={{
+          width: '32px',
+          height: '32px',
+          minWidth: '32px',
+          borderRadius: '8px',
+          border: task.completed ? 'none' : '2px solid #d1d5db',
+          backgroundColor: task.completed ? '#22c55e' : '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: task.completed ? '0 2px 8px rgba(34, 197, 94, 0.4)' : 'none'
+        }}
+        title={task.completed ? 'Mark as not done' : 'Mark as done'}
       >
-        {task.completed && <CheckSquare size={16} />}
+        {task.completed ? (
+          <CheckSquare size={20} color="white" />
+        ) : (
+          <Square size={16} color="#9ca3af" />
+        )}
       </button>
       
-      <div className="flex-1">
-        <h3 className={`font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+      {/* Task Content */}
+      <div style={{ flex: 1 }}>
+        <h3 style={{
+          fontSize: '16px',
+          fontWeight: 500,
+          margin: 0,
+          color: task.completed ? '#9ca3af' : '#1f2937',
+          textDecoration: task.completed ? 'line-through' : 'none'
+        }}>
           {task.title}
         </h3>
-        <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 flex-wrap">
-          <span className="flex items-center gap-1">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '4px',
+          fontSize: '12px',
+          color: '#6b7280',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Calendar size={12} />
             {task.dueDate || 'No due date'}
           </span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold capitalize ${getPriorityColor(task.priority)}`}>
+          <span style={{
+            padding: '2px 8px',
+            borderRadius: '9999px',
+            fontSize: '11px',
+            fontWeight: 600,
+            textTransform: 'capitalize',
+            backgroundColor: getPriorityColor(task.priority).split(' ')[0],
+            color: getPriorityColor(task.priority).split(' ')[1]
+          }}>
             {task.priority || 'medium'}
           </span>
           {task.completed && task.completedAt && (
-            <span className="flex items-center gap-1 text-green-600">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#16a34a', fontWeight: 500 }}>
               <CheckCircle size={12} />
-              Completed: {formatDate(task.completedAt)}
+              Done: {formatDate(task.completedAt)}
             </span>
           )}
         </div>
       </div>
       
-      <button 
-        className="p-2 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer" 
+      {/* Delete Button */}
+      <button
         onClick={() => onDelete(task.id)}
+        style={{
+          padding: '8px',
+          borderRadius: '6px',
+          border: 'none',
+          backgroundColor: 'transparent',
+          color: '#9ca3af',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+        title="Delete task"
+        onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
+        onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
       >
         <Trash2 size={18} />
       </button>

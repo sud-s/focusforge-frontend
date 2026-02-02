@@ -1,16 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckCircle, ListTodo, User, Settings, LogOut, Hexagon, Sparkles, Lock, Moon, Bell, Volume2 } from 'lucide-react';
+import { LayoutDashboard, CheckCircle, ListTodo, User, Settings, LogOut, Hexagon, Sparkles, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../store/authStore';
 import { useUI } from '../../store/uiStore';
 
 const Sidebar = () => {
   const { logout } = useAuth();
-  const { 
-    theme, toggleTheme, 
-    notificationsEnabled, toggleNotifications,
-    soundEnabled, toggleSound
-  } = useUI();
+  const { theme, toggleTheme } = useUI();
 
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,15 +14,6 @@ const Sidebar = () => {
     { path: '/tasks', icon: ListTodo, label: 'Tasks' },
     { path: '/ai-coach', icon: Sparkles, label: 'AI Coach' },
   ];
-
-  const Toggle = ({ checked, onChange }) => (
-    <div 
-      className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${checked ? 'bg-primary' : 'bg-gray-300'}`}
-      onClick={onChange}
-    >
-      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${checked ? 'left-6' : 'left-1'}`} />
-    </div>
-  );
 
   return (
     <aside className="sidebar overflow-y-auto">
@@ -52,43 +39,29 @@ const Sidebar = () => {
           <span>Settings</span>
         </NavLink>
         
-        <button onClick={logout} className="nav-item w-full text-left">
+        {/* Dark/Light Mode Toggle */}
+        <button 
+          onClick={toggleTheme} 
+          className="nav-item w-full text-left"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun size={20} className="text-yellow-400" />
+              <span>Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon size={20} className="text-indigo-400" />
+              <span>Dark Mode</span>
+            </>
+          )}
+        </button>
+        
+        <button onClick={logout} className="nav-item w-full text-left mt-auto">
           <LogOut size={20} />
           <span>Logout</span>
         </button>
-
-        <div className="mt-8 mb-4">
-          <h3 className="text-xs font-bold text-gray uppercase tracking-wider mb-4 px-4">App Preferences</h3>
-          
-          <button className="nav-item w-full text-left mb-2">
-            <Lock size={18} />
-            <span>Change Password</span>
-          </button>
-          
-          <div className="flex items-center justify-between px-4 py-2 text-gray-600 hover:text-gray-900">
-            <div className="flex items-center gap-3">
-              <Moon size={18} />
-              <span>Dark Mode</span>
-            </div>
-            <Toggle checked={theme === 'dark'} onChange={toggleTheme} />
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-2 text-gray-600 hover:text-gray-900">
-            <div className="flex items-center gap-3">
-              <Bell size={18} />
-              <span>Email Notifications</span>
-            </div>
-            <Toggle checked={notificationsEnabled} onChange={toggleNotifications} />
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-2 text-gray-600 hover:text-gray-900">
-            <div className="flex items-center gap-3">
-              <Volume2 size={18} />
-              <span>Sound Effects</span>
-            </div>
-            <Toggle checked={soundEnabled} onChange={toggleSound} />
-          </div>
-        </div>
       </nav>
     </aside>
   );

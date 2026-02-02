@@ -86,11 +86,15 @@ export const TaskProvider = ({ children }) => {
     if (user) storeTasks(user.id, updatedTasks);
     
     try {
-      // Try to update backend
-      await taskApi.update(id, { 
-        completed: newCompletedStatus,
-        completedAt: completedAt
-      });
+      // Use complete endpoint when marking as done, update endpoint when marking as not done
+      if (newCompletedStatus) {
+        await taskApi.complete(id);
+      } else {
+        await taskApi.update(id, { 
+          completed: false,
+          completedAt: null
+        });
+      }
     } catch (err) {
       console.warn('Backend update failed, but localStorage updated:', err.message);
       // localStorage already has the update, so we're good

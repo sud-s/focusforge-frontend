@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { User, Bell, Lock, Palette, Save, CheckCircle, AlertCircle, Moon, Sun, Volume2, VolumeX, Mail, AtSign } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Bell, Lock, Palette, Save, CheckCircle, AlertCircle, Moon, Sun, Volume2, VolumeX, Mail, AtSign, Camera, Upload, X } from 'lucide-react';
 import { useAuth } from '../../store/authStore';
 import { useUI } from '../../store/uiStore';
 import settingsApi from '../../api/settingsApi';
 import Button from '../common/Button';
-import Input from '../common/Input';
-import Loader from '../common/Loader';
 import '../../styles/forms.css';
 import '../../styles/cards.css';
 
@@ -21,10 +19,13 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Profile form
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
+    username: user?.username || '',
     email: user?.email || '',
   });
 
@@ -35,21 +36,41 @@ const SettingsPage = () => {
     confirmPassword: '',
   });
 
-  // Personalization form
-  const [personalization, setPersonalization] = useState({
-    language: 'en',
-    timezone: 'UTC',
-    dateFormat: 'YYYY-MM-DD',
-  });
-
   useEffect(() => {
     if (user) {
       setProfileData({
         name: user.name || '',
+        username: user.username || '',
         email: user.email || '',
       });
+      if (user.avatar_url || user.profile_photo) {
+        setAvatarPreview(user.avatar_url || user.profile_photo);
+      }
     }
   }, [user]);
+
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // TODO: Upload to server
+      setSuccess('Photo selected - save to apply');
+      setTimeout(() => setSuccess(''), 3000);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleProfileSave = async () => {
     setLoading(true);
@@ -126,12 +147,12 @@ const SettingsPage = () => {
       )}
 
       <div className="card">
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors ${
+              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'text-primary border-b-2 border-primary -mb-px'
                   : 'text-gray-500 hover:text-gray-700'
@@ -149,22 +170,84 @@ const SettingsPage = () => {
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">Profile Information</h2>
               
+              {/* Avatar Section - Telegram Style */}
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  {avatarPreview ? (
+                    <div className="relative">
+                      <img 
+                        src={avatarPreview} 
+                        alt="Profile" 
+                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                      <button
+                        onClick={handleRemoveAvatar}
+                        className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div 
+                      className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-3xl font-bold shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {profileData.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarSelect}
+                    className="hidden"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{profileData.name || 'Your Name'}</h3>
+                  <p className="text-gray text-sm">@{profileData.username || 'username'}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                    >
+                      <Camera size={16} />
+                      Change Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium mb-2 flex items-center gap-2">
                     <AtSign size={14} />
-                    Name
+                    First Name
                   </label>
                   <input
                     type="text"
                     className="form-input"
                     value={profileData.name}
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    placeholder="Your name"
+                    placeholder="Your first name"
                   />
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <AtSign size={14} />
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={profileData.username}
+                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                    placeholder="@username"
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2 flex items-center gap-2">
                     <Mail size={14} />
                     Email
