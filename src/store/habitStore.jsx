@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import habitApi from '../api/habitApi';
 import { useAuth } from './authStore';
 
@@ -9,52 +9,99 @@ export const HabitProvider = ({ children }) => {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [aiWelcome, setAiWelcome] = useState(null);
-  const [aiSuggestions, setAiSuggestions] = useState(null);
 
-  const fetchHabits = async () => {
+  // ALWAYS fetch from backend - NO localStorage for habit state
+  const fetchHabits = useCallback(async () => {
+    if (!user) {
+      setHabits([]);
+      return;
+    }
+    
     setLoading(true);
+    setError(null);
     try {
       const data = await habitApi.getAll();
       setHabits(data);
-      setError(null);
+      console.log('[HabitStore] Fetched habits from backend:', data);
     } catch (err) {
+      console.error('[HabitStore] Failed to fetch habits:', err);
       setError(err.message);
+      setHabits([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const addHabit = async (habitData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const newHabit = await habitApi.create(habitData);
+      console.log('[HabitStore] Created habit:', newHabit);
+      // Refetch to get updated list from backend
+      await fetchHabits();
+      return newHabit;
+    } catch (err) {
+      console.error('[HabitStore] Failed to create habit:', err);
+      setError(err.message);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const deleteHabit = async (id) => {
+    setLoading(true);
+    setError(null);
     try {
       await habitApi.delete(id);
-      setHabits(habits.filter(h => h.id !== id));
+      console.log('[HabitStore] Deleted habit:', id);
+      // Refetch to get updated list from backend
+      await fetchHabits();
     } catch (err) {
+      console.error('[HabitStore] Failed to delete habit:', err);
       setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addHabit = async (habitData) => {
+  const logHabit = async (id, dateStr = null, timeStr = null) => {
+    setLoading(true);
+    setError(null);
     try {
-      console.log("Sending to backend:", habitData);
-      const newHabit = await habitApi.create(habitData);
-      console.log("Backend response:", newHabit);
-      setHabits([...habits, newHabit]);
+      console.log('[HabitStore] Logging habit:', id, 'date:', dateStr, 'time:', timeStr);
+      const result = await habitApi.log(id, dateStr, timeStr);
+      console.log('[HabitStore] Log result:', result);
+      // ALWAYS refetch from backend after logging
+      await fetchHabits();
+      return result;
     } catch (err) {
-      console.error("FULL ERROR:", err.response?.data || err.message);
-      setError(err.response?.data || err.message);
+      console.error('[HabitStore] Failed to log habit:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logHabit = async (id) => {
+  const missHabit = async (id) => {
+    setLoading(true);
+    setError(null);
     try {
-      await habitApi.log(id);
-      // Optimistically update or re-fetch
-      // Assuming log implies completion for today
-      setHabits(habits.map(h => h.id === id ? { ...h, completedToday: true, streak: h.streak + 1 } : h));
+      console.log('[HabitStore] Marking habit as missed:', id);
+      const result = await habitApi.miss(id);
+      console.log('[HabitStore] Miss result:', result);
+      // ALWAYS refetch from backend after marking missed
+      await fetchHabits();
+      return result;
     } catch (err) {
+      console.error('[HabitStore] Failed to mark habit as missed:', err);
       setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,10 +109,9 @@ export const HabitProvider = ({ children }) => {
   const fetchAIWelcome = async () => {
     try {
       const data = await habitApi.getAIWelcome();
-      setAiWelcome(data);
       return data;
     } catch (err) {
-      console.error('Failed to fetch AI welcome:', err);
+      console.error('[HabitStore] Failed to fetch AI welcome:', err);
       return null;
     }
   };
@@ -73,10 +119,9 @@ export const HabitProvider = ({ children }) => {
   const fetchAISuggestions = async (habitId) => {
     try {
       const data = await habitApi.getAISuggestions(habitId);
-      setAiSuggestions(data);
       return data;
     } catch (err) {
-      console.error('Failed to fetch AI suggestions:', err);
+      console.error('[HabitStore] Failed to fetch AI suggestions:', err);
       return null;
     }
   };
@@ -86,7 +131,7 @@ export const HabitProvider = ({ children }) => {
       const data = await habitApi.predict(habitId);
       return data;
     } catch (err) {
-      console.error('Failed to fetch AI prediction:', err);
+      console.error('[HabitStore] Failed to fetch AI prediction:', err);
       return null;
     }
   };
@@ -96,30 +141,31 @@ export const HabitProvider = ({ children }) => {
       const data = await habitApi.getAIStats(habitId);
       return data;
     } catch (err) {
-      console.error('Failed to fetch AI stats:', err);
+      console.error('[HabitStore] Failed to fetch AI stats:', err);
       return null;
     }
   };
 
+  // Fetch habits when user changes
   useEffect(() => {
     if (user) {
+      console.log('[HabitStore] User changed, fetching habits...');
       fetchHabits();
     } else {
       setHabits([]);
     }
-  }, [user]);
+  }, [user, fetchHabits]);
 
   return (
     <HabitContext.Provider value={{ 
       habits, 
       loading, 
-      error, 
+      error,
       addHabit, 
       deleteHabit, 
       fetchHabits, 
       logHabit,
-      aiWelcome,
-      aiSuggestions,
+      missHabit,
       fetchAIWelcome,
       fetchAISuggestions,
       fetchAIPrediction,
@@ -130,4 +176,10 @@ export const HabitProvider = ({ children }) => {
   );
 };
 
-export const useHabits = () => useContext(HabitContext);
+export const useHabits = () => {
+  const context = useContext(HabitContext);
+  if (!context) {
+    throw new Error('useHabits must be used within a HabitProvider');
+  }
+  return context;
+};

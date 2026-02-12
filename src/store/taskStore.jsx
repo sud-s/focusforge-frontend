@@ -1,130 +1,187 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import taskApi from '../api/taskApi';
 import { useAuth } from './authStore';
 
 const TaskContext = createContext();
 
-// Helper functions for localStorage persistence
-const getStoredTasks = (userId) => {
-  try {
-    const stored = localStorage.getItem(`focusforge_tasks_${userId}`);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const storeTasks = (userId, tasks) => {
-  try {
-    localStorage.setItem(`focusforge_tasks_${userId}`, JSON.stringify(tasks));
-  } catch (e) {
-    console.warn('Failed to store tasks in localStorage:', e);
-  }
-};
-
 export const TaskProvider = ({ children }) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
+  const [todayTasks, setTodayTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchTasks = async () => {
+  // Fetch all tasks
+  const fetchTasks = useCallback(async () => {
+    if (!user) {
+      setTasks([]);
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
       const data = await taskApi.getAll();
-      // Merge with localStorage to preserve completed status
-      const storedTasks = user ? getStoredTasks(user.id) : [];
-      const mergedTasks = data.map(task => {
-        const stored = storedTasks.find(st => st.id === task.id);
-        return stored ? { ...task, completed: stored.completed, completedAt: stored.completedAt } : task;
-      });
-      setTasks(mergedTasks);
-      if (user) storeTasks(user.id, mergedTasks);
-      setError(null);
+      setTasks(data);
+      console.log('[TaskStore] Fetched all tasks:', data);
     } catch (err) {
-      // Fallback to localStorage if API fails
-      const storedTasks = user ? getStoredTasks(user.id) : [];
-      setTasks(storedTasks);
+      console.error('[TaskStore] Failed to fetch tasks:', err);
       setError(err.message);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Fetch today's tasks
+  const fetchTodayTasks = useCallback(async () => {
+    if (!user) {
+      setTodayTasks([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await taskApi.getToday();
+      setTodayTasks(data);
+      console.log('[TaskStore] Fetched today\'s tasks:', data);
+    } catch (err) {
+      console.error('[TaskStore] Failed to fetch today\'s tasks:', err);
+      setError(err.message);
+      setTodayTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Create task - user provides due_date, system auto-categorizes
+  const addTask = async (taskData) => {
+    if (!taskData.due_date) {
+      throw new Error('due_date is required');
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const newTask = await taskApi.create(taskData);
+      console.log('[TaskStore] Created task:', newTask);
+      await fetchTasks();
+      await fetchTodayTasks();
+      return newTask;
+    } catch (err) {
+      console.error('[TaskStore] Failed to create task:', err);
+      setError(err.message);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const addTask = async (taskData) => {
-    try {
-      console.log('Adding task:', taskData);
-      const newTask = await taskApi.create(taskData);
-      console.log('Task created:', newTask);
-      const updatedTasks = [...tasks, newTask];
-      setTasks(updatedTasks);
-      if (user) storeTasks(user.id, updatedTasks);
-    } catch (err) {
-      console.error('Add Task Error:', err);
-      setError(err.response?.data?.message || err.message);
-    }
-  };
-
+  // Toggle completion - refetch from backend
   const toggleTask = async (id) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task) return;
-    
-    const newCompletedStatus = !task.completed;
-    const completedAt = newCompletedStatus ? (task.completedAt || new Date().toISOString()) : null;
-    
-    // Optimistically update
-    const updatedTasks = tasks.map(t => 
-      t.id === id ? { 
-        ...t, 
-        completed: newCompletedStatus,
-        completedAt: completedAt
-      } : t
-    );
-    setTasks(updatedTasks);
-    
-    // Persist to localStorage
-    if (user) storeTasks(user.id, updatedTasks);
-    
+    setLoading(true);
+    setError(null);
     try {
-      // Use complete endpoint when marking as done, update endpoint when marking as not done
-      if (newCompletedStatus) {
-        await taskApi.complete(id);
-      } else {
-        await taskApi.update(id, { 
-          completed: false,
-          completedAt: null
-        });
-      }
+      await taskApi.complete(id);
+      console.log('[TaskStore] Completed task:', id);
+      await fetchTasks();
+      await fetchTodayTasks();
     } catch (err) {
-      console.warn('Backend update failed, but localStorage updated:', err.message);
-      // localStorage already has the update, so we're good
+      console.error('[TaskStore] Failed to complete task:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Uncomplete/reopen a task
+  const uncompleteTask = async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await taskApi.uncomplete(id);
+      console.log('[TaskStore] Uncompleted task:', id);
+      await fetchTasks();
+      await fetchTodayTasks();
+    } catch (err) {
+      console.error('[TaskStore] Failed to uncomplete task:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mark task as missed
+  const markTaskMissed = async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await taskApi.markMissed(id);
+      console.log('[TaskStore] Marked task as missed:', id);
+      await fetchTasks();
+      await fetchTodayTasks();
+    } catch (err) {
+      console.error('[TaskStore] Failed to mark task as missed:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete task
   const deleteTask = async (id) => {
+    setLoading(true);
+    setError(null);
     try {
       await taskApi.delete(id);
-      const updatedTasks = tasks.filter(t => t.id !== id);
-      setTasks(updatedTasks);
-      if (user) storeTasks(user.id, updatedTasks);
+      console.log('[TaskStore] Deleted task:', id);
+      await fetchTasks();
+      await fetchTodayTasks();
     } catch (err) {
+      console.error('[TaskStore] Failed to delete task:', err);
       setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch tasks when user changes
   useEffect(() => {
     if (user) {
+      console.log('[TaskStore] User changed, fetching tasks...');
       fetchTasks();
+      fetchTodayTasks();
     } else {
       setTasks([]);
+      setTodayTasks([]);
     }
-  }, [user]);
+  }, [user, fetchTasks, fetchTodayTasks]);
 
   return (
-    <TaskContext.Provider value={{ tasks, loading, error, addTask, toggleTask, deleteTask, fetchTasks }}>
+    <TaskContext.Provider value={{ 
+      tasks, 
+      todayTasks,
+      loading, 
+      error, 
+      addTask, 
+      toggleTask,
+      uncompleteTask,
+      markTaskMissed,
+      deleteTask, 
+      fetchTasks,
+      fetchTodayTasks 
+    }}>
       {children}
     </TaskContext.Provider>
   );
 };
 
-export const useTasks = () => useContext(TaskContext);
+export const useTasks = () => {
+  const context = useContext(TaskContext);
+  if (!context) {
+    throw new Error('useTasks must be used within a TaskProvider');
+  }
+  return context;
+};
