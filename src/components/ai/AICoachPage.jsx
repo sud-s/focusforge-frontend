@@ -1,471 +1,643 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Send, Bot, User, BarChart2, RefreshCw, Brain, Lightbulb, AlertTriangle, Clock, Calendar, Trophy, CheckCircle, Target } from 'lucide-react';
-import Button from '../common/Button';
+import React, { useState, useEffect } from 'react';
+import { 
+  Sparkles, TrendingUp, TrendingDown, AlertTriangle, 
+  Clock, Calendar, Trophy, Target, ArrowRight,
+  RefreshCw, CheckCircle, XCircle, Zap
+} from 'lucide-react';
+import coachApi from '../../api/coachApi';
 import '../../styles/cards.css';
-import { useHabits } from '../../store/habitStore';
-import { useTasks } from '../../store/taskStore';
-import habitApi from '../../api/habitApi';
 
 const AICoachPage = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [selectedHabit, setSelectedHabit] = useState(null);
-  const [welcomeData, setWelcomeData] = useState(null);
-  const [suggestions, setSuggestions] = useState(null);
-  const [loadingAI, setLoadingAI] = useState(false);
-  const [taskInsights, setTaskInsights] = useState(null);
-  const { habits } = useHabits();
-  const { tasks } = useTasks();
+  const [loading, setLoading] = useState(true);
+  const [coachData, setCoachData] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [error, setError] = useState(null);
 
-  // Fetch welcome message on initial load
+  // Load coach data on mount
   useEffect(() => {
-    fetchWelcomeMessage();
+    loadCoachData();
   }, []);
 
-  // Analyze task data and generate insights
-  useEffect(() => {
-    if (tasks.length > 0) {
-      analyzeTaskData();
-    }
-  }, [tasks]);
-
-  const fetchWelcomeMessage = async () => {
-    try {
-      const data = await habitApi.getAIWelcome();
-      setWelcomeData(data);
-      
-      // Set initial message
-      setMessages([{
-        id: 1,
-        sender: 'ai',
-        text: data.message,
-        title: data.title,
-        features: data.features,
-        tip: data.tip
-      }]);
-    } catch (e) {
-      console.error('Failed to fetch welcome message:', e);
-      // Fallback message
-      setMessages([{
-        id: 1,
-        sender: 'ai',
-        text: "Hi! I'm your AI coach. I'll share insights from your habits and tasks and help you stay on track."
-      }]);
-    }
-  };
-
-  // Analyze task completion patterns
-  const analyzeTaskData = () => {
-    const completedTasks = tasks.filter(t => t.completed);
-    const pendingTasks = tasks.filter(t => !t.completed);
-    const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
-    
-    // Count by priority
-    const highPriorityPending = pendingTasks.filter(t => t.priority === 'high').length;
-    const mediumPriorityPending = pendingTasks.filter(t => t.priority === 'medium').length;
-    const lowPriorityPending = pendingTasks.filter(t => t.priority === 'low').length;
-    
-    // Recent completions (last 24 hours)
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentCompletions = completedTasks.filter(t => {
-      if (!t.completedAt) return false;
-      return new Date(t.completedAt) > oneDayAgo;
-    });
-
-    // Generate insights
-    const insights = [];
-    
-    if (completionRate >= 80 && tasks.length >= 3) {
-      insights.push({
-        type: 'streak',
-        title: 'Task Master!',
-        message: `You've completed ${completionRate}% of your tasks! That's excellent work.`,
-        action: 'Keep up the amazing productivity!'
-      });
-    } else if (completionRate < 30 && tasks.length >= 3) {
-      insights.push({
-        type: 'warning',
-        title: 'Task Focus Needed',
-        message: `Only ${completionRate}% of tasks completed. Let's get you back on track!`,
-        action: 'Try focusing on one task at a time'
-      });
-    }
-    
-    if (highPriorityPending > 0) {
-      insights.push({
-        type: 'warning',
-        title: 'High Priority Tasks Pending',
-        message: `You have ${highPriorityPending} high priority task${highPriorityPending > 1 ? 's' : ''} waiting.`,
-        action: 'Consider tackling the high priority tasks first'
-      });
-    }
-    
-    if (recentCompletions.length >= 3) {
-      insights.push({
-        type: 'streak',
-        title: 'Hot Streak!',
-        message: `You completed ${recentCompletions.length} tasks in the last 24 hours!`,
-        action: 'Ride this momentum!'
-      });
-    }
-    
-    if (pendingTasks.length === 0 && completedTasks.length > 0) {
-      insights.push({
-        type: 'tip',
-        title: 'All Caught Up!',
-        message: 'You have no pending tasks. Great job! Consider adding new goals.',
-        action: 'Add new tasks to keep growing'
-      });
-    }
-    
-    if (completionRate >= 40 && completionRate < 80) {
-      insights.push({
-        type: 'tip',
-        title: 'Good Progress',
-        message: `You're ${completionRate}% through your tasks. Keep pushing!`,
-        action: 'Small steps lead to big achievements'
-      });
-    }
-
-    setTaskInsights({
-      total: tasks.length,
-      completed: completedTasks.length,
-      pending: pendingTasks.length,
-      completionRate,
-      insights
-    });
-  };
-
-  // Fetch AI suggestions for selected habit
-  const fetchAISuggestions = async (habitId) => {
-    if (!habitId) return;
-    
-    setLoadingAI(true);
-    try {
-      const data = await habitApi.getAISuggestions(habitId);
-      setSuggestions(data);
-      
-      const habit = habits.find(h => h.id === habitId);
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'ai',
-        text: data.summary || `I've analyzed "${habit?.name}" for you!`
-      }]);
-    } catch (e) {
-      console.error('Failed to fetch AI suggestions:', e);
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: 'ai',
-        text: "I couldn't fetch AI suggestions. Make sure the backend is running with ML models installed."
-      }]);
-    } finally {
-      setLoadingAI(false);
-    }
-  };
-
-  // Initial fetch when habits load
-  useEffect(() => {
-    if (habits.length > 0 && !selectedHabit) {
-      setSelectedHabit(habits[0].id);
-      fetchAISuggestions(habits[0].id);
-    }
-  }, [habits]);
-
-  const handleSelectHabit = (habitId) => {
-    setSelectedHabit(habitId);
-    const habit = habits.find(h => h.id === habitId);
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      sender: 'ai',
-      text: `Let me analyze "${habit?.name}" for you...`
-    }]);
-    fetchAISuggestions(habitId);
-  };
-
-  const handleRefresh = () => {
-    if (selectedHabit) {
-      fetchAISuggestions(selectedHabit);
-    }
-  };
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
-
-    const newMsg = { id: Date.now(), sender: 'user', text: inputText };
-    setMessages(prev => [...prev, newMsg]);
-    setInputText('');
+  const loadCoachData = async () => {
     setLoading(true);
-
+    setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        sender: 'ai',
-        text: "Thanks for sharing! Keep logging your habits to get better AI predictions over time."
-      }]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        sender: 'ai',
-        text: "Sorry, I'm having trouble connecting to the server right now."
-      }]);
+      const response = await coachApi.getAllInsights();
+      setCoachData(response.data);
+    } catch (err) {
+      console.error('Error loading coach data:', err);
+      setError('Failed to load AI Coach data. Please try again.');
+      // Set fallback data
+      setCoachData({
+        status: {
+          status: 'active',
+          coach_type: 'Discipline Coach',
+          user_level: '🌱 Starter',
+          summary: {
+            productivity_score: 0,
+            trend: 'stable',
+            total_habits: 0,
+            average_streak: 0
+          }
+        },
+        tomorrow: {
+          date: new Date().toISOString().split('T')[0],
+          overall_prediction: {
+            success_probability: 0,
+            level: 'uncertain',
+            confidence: 'low'
+          },
+          habits_prediction: [],
+          alerts: [],
+          coach_message: 'Start tracking habits to get predictions!'
+        },
+        failure_risk: {
+          risk_score: 0,
+          risk_level: 'low',
+          identified_risks: [],
+          protective_factors: [],
+          coach_intervention: 'Start building your discipline foundation!'
+        },
+        weekly_score: {
+          score: 0,
+          level: '🌱 Starter',
+          metrics: { tasks_completed: 0, habits_completed: 0, total_completions: 0 },
+          comparison: { last_week_total: 0, change_percent: 0, trend: 'stable' },
+          coach_assessment: 'Building from the ground up!'
+        },
+        recommendations: {
+          recommendations: [],
+          coach_tip: 'Start with one habit and be consistent!',
+          focus_area: 'Create your first habit'
+        }
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Render suggestion card based on type
-  const renderSuggestion = (suggestion) => {
-    const icons = {
-      warning: <AlertTriangle size={18} className="text-amber-500" />,
-      optimal_time: <Clock size={18} className="text-blue-500" />,
-      difficult_day: <Calendar size={18} className="text-red-500" />,
-      streak: <Trophy size={18} className="text-yellow-500" />,
-      tip: <Lightbulb size={18} className="text-purple-500" />
-    };
+  // Helper functions
+  const getLevelEmoji = (level) => {
+    if (level.includes('Elite')) return '🏆';
+    if (level.includes('Pro')) return '⭐';
+    if (level.includes('Growing')) return '📈';
+    if (level.includes('Starter')) return '🌱';
+    return '💪';
+  };
 
-    const bgColors = {
-      warning: 'bg-amber-50 border-amber-200',
-      optimal_time: 'bg-blue-50 border-blue-200',
-      difficult_day: 'bg-red-50 border-red-200',
-      streak: 'bg-yellow-50 border-yellow-200',
-      tip: 'bg-purple-50 border-purple-200'
-    };
+  const getTrendIcon = (trend) => {
+    if (trend === 'improving') return <TrendingUp size={16} className="text-success" />;
+    if (trend === 'declining') return <TrendingDown size={16} className="text-danger" />;
+    return <span className="text-secondary">➡️</span>;
+  };
 
+  const getRiskColor = (level) => {
+    switch (level) {
+      case 'critical': return 'danger';
+      case 'high': return 'danger';
+      case 'medium': return 'warning';
+      case 'low': return 'success';
+      default: return 'secondary';
+    }
+  };
+
+  const getPredictionColor = (probability) => {
+    if (probability >= 70) return 'success';
+    if (probability >= 40) return 'warning';
+    return 'danger';
+  };
+
+  if (loading) {
     return (
-      <div key={suggestion.title} className={`p-3 rounded-lg border ${bgColors[suggestion.type] || bgColors.tip} mb-2`}>
-        <div className="flex items-start gap-2">
-          <span className="flex-shrink-0 mt-0.5">{icons[suggestion.type] || icons.tip}</span>
-          <div className="flex-1">
-            <h4 className="font-medium text-sm">{suggestion.title}</h4>
-            <p className="text-sm text-gray-600 mt-1">{suggestion.message}</p>
-            {suggestion.action && (
-              <p className="text-sm text-primary font-medium mt-2">💡 {suggestion.action}</p>
-            )}
-          </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-secondary">Loading AI Coach...</p>
         </div>
       </div>
     );
-  };
+  }
 
-  const selectedHabitData = habits.find(h => h.id === selectedHabit);
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle size={48} className="text-warning mx-auto mb-4" />
+          <p className="text-danger mb-4">{error}</p>
+          <button onClick={loadCoachData} className="btn btn-primary">
+            <RefreshCw size={16} className="mr-2" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { status, tomorrow, failure_risk, weekly_score, recommendations } = coachData || {};
 
   return (
-    <div className="h-full flex flex-col max-h-[calc(100vh-120px)]">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Sparkles className="text-purple-500" />
-          AI Coach
-        </h1>
-        <p className="text-gray">Your personal productivity assistant with ML-powered predictions.</p>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="text-primary" />
+            AI Discipline Coach
+          </h2>
+          <p className="text-secondary">Your personal accountability system</p>
+        </div>
+        <button onClick={loadCoachData} className="btn btn-outline">
+          <RefreshCw size={16} className="mr-2" />
+          Refresh
+        </button>
       </div>
 
-      {/* Welcome Message Display */}
-      {welcomeData && messages.length === 1 && (
-        <div className="card mb-4 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-          <div className="p-4">
-            <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
-              <Sparkles className="text-purple-500" size={20} />
-              {welcomeData.title}
-            </h2>
-            <p className="text-gray-700 mb-3">{welcomeData.message}</p>
-            {welcomeData.features && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {welcomeData.features.map((feature, idx) => (
-                  <span key={idx} className="px-2 py-1 bg-white rounded-full text-xs font-medium text-gray-600">
-                    {feature}
-                  </span>
-                ))}
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-6 border-b border-color pb-2">
+        {[
+          { id: 'dashboard', label: 'Dashboard', icon: Target },
+          { id: 'tomorrow', label: 'Tomorrow', icon: Calendar },
+          { id: 'risks', label: 'Risk Analysis', icon: AlertTriangle },
+          { id: 'weekly', label: 'Weekly Score', icon: Trophy },
+          { id: 'recommendations', label: 'Actions', icon: ArrowRight },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === tab.id
+                ? 'bg-primary text-white'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
+        {activeTab === 'dashboard' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Status Card */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Your Discipline Status</h3>
               </div>
-            )}
-            {welcomeData.tip && (
-              <p className="text-sm text-purple-600 font-medium">💡 {welcomeData.tip}</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* AI Suggestions Panel */}
-      {suggestions && suggestions.suggestions && suggestions.suggestions.length > 0 && (
-        <div className="card mb-4">
-          <div className="card-header">
-            <div className="flex items-center gap-2">
-              <Brain className="text-purple-500" size={20} />
-              <h3 className="card-title">Smart Insights: {selectedHabitData?.name}</h3>
-            </div>
-          </div>
-          <div className="p-4">
-            {suggestions.suggestions.map(renderSuggestion)}
-            {suggestions.summary && (
-              <p className="text-sm text-gray-500 mt-3 text-center">{suggestions.summary}</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Task Insights Panel */}
-      {taskInsights && (
-        <div className="card mb-4 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-          <div className="card-header">
-            <div className="flex items-center gap-2">
-              <Target className="text-blue-500" size={20} />
-              <h3 className="card-title">Task Performance</h3>
-            </div>
-            <div className="text-sm font-bold text-blue-600">
-              {taskInsights.completionRate}% Complete
-            </div>
-          </div>
-          <div className="p-4">
-            {/* Progress bar */}
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-              <div 
-                className="bg-blue-500 h-3 rounded-full transition-all duration-500" 
-                style={{ width: `${taskInsights.completionRate}%` }}
-              />
-            </div>
-            
-            {/* Stats */}
-            <div className="flex justify-between text-sm mb-3">
-              <span className="flex items-center gap-1 text-green-600">
-                <CheckCircle size={14} />
-                {taskInsights.completed} Completed
-              </span>
-              <span className="flex items-center gap-1 text-gray-500">
-                <Target size={14} />
-                {taskInsights.pending} Pending
-              </span>
-              <span className="text-gray-500">
-                {taskInsights.total} Total
-              </span>
-            </div>
-            
-            {/* Task Insights */}
-            {taskInsights.insights.length > 0 && (
-              <div className="mt-3">
-                {taskInsights.insights.map((insight, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`p-2 rounded-lg border mb-2 text-sm ${
-                      insight.type === 'streak' ? 'bg-yellow-50 border-yellow-200' :
-                      insight.type === 'warning' ? 'bg-amber-50 border-amber-200' :
-                      'bg-purple-50 border-purple-200'
-                    }`}
-                  >
-                    <p className="font-medium">{insight.title}</p>
-                    <p className="text-gray-600">{insight.message}</p>
-                    {insight.action && (
-                      <p className="text-primary font-medium mt-1">💡 {insight.action}</p>
-                    )}
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="text-5xl">{getLevelEmoji(status?.user_level || '🌱 Starter')}</div>
+                  <div>
+                    <div className="text-2xl font-bold">{status?.user_level || '🌱 Starter'}</div>
+                    <div className="flex items-center gap-2 text-secondary">
+                      {getTrendIcon(status?.summary?.trend)}
+                      <span>{status?.summary?.trend || 'stable'}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                </div>
 
-      {/* Habit Selector */}
-      {habits.length > 0 && (
-        <div className="mt-4 p-4 card">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <BarChart2 size={18} />
-              Select Habit to Analyze
-            </h3>
-            <button 
-              onClick={handleRefresh}
-              className="text-purple-500 hover:text-purple-700 flex items-center gap-1"
-              disabled={loadingAI}
-            >
-              <RefreshCw size={16} className={loadingAI ? 'animate-spin' : ''} />
-              <span className="text-sm">Refresh</span>
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {habits.map(habit => (
-              <button
-                key={habit.id}
-                onClick={() => handleSelectHabit(habit.id)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  selectedHabit === habit.id 
-                    ? 'bg-primary text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {habit.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Chat Interface */}
-      <div className="flex-1 card flex flex-col overflow-hidden mt-4">
-        <div className="flex items-center justify-between px-4 py-2 bg-purple-50 border-b border-purple-100">
-          <div className="flex items-center gap-2">
-            <Brain size={16} className="text-purple-500" />
-            <span className="text-sm font-medium text-purple-700">AI Chat</span>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-          {messages.map((msg) => (
-            <div 
-              key={msg.id} 
-              className={`flex gap-3 max-w-[80%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 
-                ${msg.sender === 'ai' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                {msg.sender === 'ai' ? <Bot size={18} /> : <User size={18} />}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-3xl font-bold text-primary">
+                      {status?.summary?.productivity_score || 0}%
+                    </div>
+                    <div className="text-sm text-secondary">Productivity Score</div>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-3xl font-bold text-primary">
+                      {status?.summary?.average_streak || 0}
+                    </div>
+                    <div className="text-sm text-secondary">Avg. Streak</div>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-3xl font-bold text-primary">
+                      {status?.summary?.total_habits || 0}
+                    </div>
+                    <div className="text-sm text-secondary">Active Habits</div>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-3xl font-bold text-warning">
+                      {failure_risk?.risk_level?.toUpperCase() || 'LOW'}
+                    </div>
+                    <div className="text-sm text-secondary">Risk Level</div>
+                  </div>
+                </div>
               </div>
-              <div className={`p-3 rounded-2xl ${
-                msg.sender === 'user' 
-                  ? 'bg-primary text-white rounded-tr-none' 
-                  : 'bg-gray-100 text-gray-800 rounded-tl-none'
-              }`}>
-                {msg.title && <p className="font-bold mb-1">{msg.title}</p>}
-                <p className="text-sm">{msg.text}</p>
-                {msg.features && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {msg.features.map((f, i) => (
-                      <span key={i} className="text-xs">{f}</span>
-                    ))}
+            </div>
+
+            {/* Tomorrow Preview Card */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Tomorrow's Preview</h3>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-secondary">Success Probability</span>
+                  <span className={`text-4xl font-bold text-${getPredictionColor(tomorrow?.overall_prediction?.success_probability)}`}>
+                    {tomorrow?.overall_prediction?.success_probability || 0}%
+                  </span>
+                </div>
+                
+                <div className="progress-bar h-4 mb-4">
+                  <div 
+                    className={`progress-bar-fill bg-${getPredictionColor(tomorrow?.overall_prediction?.success_probability)}`} 
+                    style={{ width: `${tomorrow?.overall_prediction?.success_probability || 0}%` }}
+                  ></div>
+                </div>
+
+                <div className={`p-3 rounded-lg ${
+                  tomorrow?.overall_prediction?.success_probability >= 70 ? 'bg-success/10 text-success' :
+                  tomorrow?.overall_prediction?.success_probability >= 40 ? 'bg-warning/10 text-warning' :
+                  'bg-danger/10 text-danger'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {tomorrow?.overall_prediction?.success_probability >= 70 ? <CheckCircle size={18} /> :
+                     tomorrow?.overall_prediction?.success_probability >= 40 ? <Clock size={18} /> :
+                     <XCircle size={18} />}
+                    <span className="font-medium">
+                      {tomorrow?.overall_prediction?.level || 'uncertain'} to succeed
+                    </span>
+                  </div>
+                </div>
+
+                {tomorrow?.alerts?.length > 0 && (
+                  <div className="mt-4 p-3 bg-danger/10 rounded-lg">
+                    <div className="flex items-center gap-2 text-danger">
+                      <AlertTriangle size={16} />
+                      <span className="font-medium">{tomorrow.alerts[0].message}</span>
+                    </div>
                   </div>
                 )}
-                {msg.tip && <p className="text-sm mt-2 text-purple-600 font-medium">💡 {msg.tip}</p>}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex gap-3">
-               <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
-                <Bot size={18} />
-              </div>
-              <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none flex items-center gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className="p-4 border-t border-gray-100 bg-white">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              type="text"
-              className="flex-1 p-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
-              placeholder="Ask for advice..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
-            <Button type="submit" disabled={!inputText.trim() || loading} icon={Send}>
-              Send
-            </Button>
-          </form>
-        </div>
+                <p className="mt-4 text-sm text-secondary italic">
+                  "{tomorrow?.coach_message || 'Keep building your discipline!'}"
+                </p>
+              </div>
+            </div>
+
+            {/* Coach Tip */}
+            <div className="card lg:col-span-2">
+              <div className="card-header">
+                <h3 className="card-title">💡 Your Coach's Tip</h3>
+              </div>
+              <div className="p-6">
+                <p className="text-lg">{recommendations?.coach_tip || 'Start with one habit and be consistent!'}</p>
+                <p className="text-secondary mt-2">
+                  Focus Area: <strong>{recommendations?.focus_area || 'Building foundation'}</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tomorrow' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Overall Prediction */}
+            <div className="card">
+              <div className="card-header">
+                <Calendar size={20} />
+                <h3 className="card-title">{tomorrow?.date || 'Tomorrow'}</h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className={`text-6xl font-bold text-${getPredictionColor(tomorrow?.overall_prediction?.success_probability)}`}>
+                    {tomorrow?.overall_prediction?.success_probability || 0}%
+                  </div>
+                  <div className="text-secondary mt-2">
+                    {tomorrow?.overall_prediction?.level || 'uncertain'} to succeed
+                  </div>
+                  <div className="text-xs text-secondary mt-1">
+                    Confidence: {tomorrow?.overall_prediction?.confidence || 'low'}
+                  </div>
+                </div>
+
+                <div className="progress-bar h-6 mb-4">
+                  <div 
+                    className={`progress-bar-fill bg-${getPredictionColor(tomorrow?.overall_prediction?.success_probability)}`}
+                    style={{ width: `${tomorrow?.overall_prediction?.success_probability || 0}%` }}
+                  ></div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${
+                  tomorrow?.overall_prediction?.success_probability >= 70 ? 'bg-success/10' :
+                  tomorrow?.overall_prediction?.success_probability >= 40 ? 'bg-warning/10' :
+                  'bg-danger/10'
+                }`}>
+                  <p className="font-medium">"{tomorrow?.coach_message || 'Keep building your discipline!'}"</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Habit Predictions */}
+            <div className="card">
+              <div className="card-header">
+                <Target size={20} />
+                <h3 className="card-title">Habit Predictions</h3>
+              </div>
+              <div className="p-4 space-y-3">
+                {tomorrow?.habits_prediction?.length > 0 ? (
+                  tomorrow.habits_prediction.map((habit, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium">{habit.habit_name}</span>
+                        <span className={`text-xl font-bold text-${getPredictionColor(habit.success_probability)}`}>
+                          {habit.success_probability}%
+                        </span>
+                      </div>
+                      <div className="progress-bar h-2 mb-2">
+                        <div 
+                          className={`progress-bar-fill bg-${getPredictionColor(habit.success_probability)}`}
+                          style={{ width: `${habit.success_probability}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-secondary">
+                        <span className={`badge badge-${getRiskColor(habit.risk_level)}`}>
+                          {habit.risk_level} risk
+                        </span>
+                        <span>{habit.prediction}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-secondary">
+                    <Target size={40} className="mx-auto mb-2 opacity-50" />
+                    <p>No habits to predict yet. Create a habit to get predictions!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Alerts */}
+            {tomorrow?.alerts?.length > 0 && (
+              <div className="card lg:col-span-2">
+                <div className="card-header">
+                  <AlertTriangle size={20} className="text-danger" />
+                  <h3 className="card-title text-danger">Alerts</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  {tomorrow.alerts.map((alert, idx) => (
+                    <div key={idx} className={`p-4 rounded-lg border border-${getRiskColor(alert.type)}-200 bg-${getRiskColor(alert.type)}-50`}>
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle size={20} className={`text-${getRiskColor(alert.type)}`} />
+                        <div>
+                          <p className="font-medium">{alert.message}</p>
+                          {alert.habits?.length > 0 && (
+                            <p className="text-sm text-secondary mt-1">
+                              Affected: {alert.habits.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'risks' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Risk Score */}
+            <div className="card">
+              <div className="card-header">
+                <AlertTriangle size={20} className="text-danger" />
+                <h3 className="card-title">Failure Risk Analysis</h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className={`text-6xl font-bold text-${getRiskColor(failure_risk?.risk_level)}`}>
+                    {failure_risk?.risk_score || 0}/100
+                  </div>
+                  <div className="text-secondary mt-2">
+                    Risk Level: <span className={`font-bold text-${getRiskColor(failure_risk?.risk_level)}`}>
+                      {failure_risk?.risk_level?.toUpperCase() || 'LOW'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${
+                  failure_risk?.risk_level === 'critical' ? 'bg-danger/10' :
+                  failure_risk?.risk_level === 'high' ? 'bg-warning/10' :
+                  'bg-success/10'
+                }`}>
+                  <p className="font-medium">"{failure_risk?.coach_intervention || 'Keep building!'}"</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Identified Risks */}
+            <div className="card">
+              <div className="card-header">
+                <TrendingDown size={20} className="text-warning" />
+                <h3 className="card-title">Identified Risks</h3>
+              </div>
+              <div className="p-4 space-y-3">
+                {failure_risk?.identified_risks?.length > 0 ? (
+                  failure_risk.identified_risks.map((risk, idx) => (
+                    <div key={idx} className={`p-4 rounded-lg border-l-4 border-${getRiskColor(risk.severity)} bg-gray-50 dark:bg-gray-800`}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`badge badge-${getRiskColor(risk.severity)}`}>
+                              {risk.severity}
+                            </span>
+                            <span className="font-medium">{risk.type}</span>
+                          </div>
+                          <p className="text-sm mt-1">{risk.indicator}</p>
+                          <p className="text-xs text-secondary mt-1">{risk.impact}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-2 bg-primary/10 rounded text-sm text-primary">
+                        💡 {risk.action}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-success">
+                    <CheckCircle size={40} className="mx-auto mb-2" />
+                    <p>No major risks identified! You're doing great!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Protective Factors */}
+            <div className="card lg:col-span-2">
+              <div className="card-header">
+                <CheckCircle size={20} className="text-success" />
+                <h3 className="card-title">Protective Factors</h3>
+              </div>
+              <div className="p-4">
+                {failure_risk?.protective_factors?.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {failure_risk.protective_factors.map((factor, idx) => (
+                      <div key={idx} className="p-3 bg-success/10 rounded-lg flex items-center gap-2">
+                        <CheckCircle size={16} className="text-success" />
+                        <span>{factor}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-secondary">Start building positive habits to create protective factors!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'weekly' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Weekly Score */}
+            <div className="card">
+              <div className="card-header">
+                <Trophy size={20} className="text-warning" />
+                <h3 className="card-title">Weekly Discipline Score</h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="text-6xl mb-2">{weekly_score?.level?.split(' ')[0] || '🌱'}</div>
+                  <div className="text-4xl font-bold text-primary">
+                    {weekly_score?.score || 0}
+                  </div>
+                  <div className="text-secondary">out of 100</div>
+                </div>
+
+                <div className="progress-bar h-4 mb-4">
+                  <div 
+                    className="progress-bar-fill bg-primary" 
+                    style={{ width: `${weekly_score?.score || 0}%` }}
+                  ></div>
+                </div>
+
+                <div className={`p-3 rounded-lg text-center ${
+                  weekly_score?.comparison?.trend === 'up' ? 'bg-success/10 text-success' :
+                  weekly_score?.comparison?.trend === 'down' ? 'bg-danger/10 text-danger' :
+                  'bg-gray-100 dark:bg-gray-800 text-secondary'
+                }`}>
+                  <div className="flex items-center justify-center gap-2">
+                    {weekly_score?.comparison?.trend === 'up' ? <TrendingUp size={18} /> :
+                     weekly_score?.comparison?.trend === 'down' ? <TrendingDown size={18} /> :
+                     <span>➡️</span>}
+                    <span className="font-medium">
+                      {weekly_score?.comparison?.change_percent > 0 ? '+' : ''}
+                      {weekly_score?.comparison?.change_percent || 0}% vs last week
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-center text-secondary italic">
+                  "{weekly_score?.coach_assessment || 'Building from the ground up!'}"
+                </p>
+              </div>
+            </div>
+
+            {/* Weekly Metrics */}
+            <div className="card">
+              <div className="card-header">
+                <Zap size={20} className="text-primary" />
+                <h3 className="card-title">This Week's Metrics</h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center p-4 bg-success/10 rounded-lg">
+                    <div className="text-3xl font-bold text-success">
+                      {weekly_score?.metrics?.tasks_completed || 0}
+                    </div>
+                    <div className="text-xs text-secondary">Tasks Done</div>
+                  </div>
+                  <div className="text-center p-4 bg-primary/10 rounded-lg">
+                    <div className="text-3xl font-bold text-primary">
+                      {weekly_score?.metrics?.habits_completed || 0}
+                    </div>
+                    <div className="text-xs text-secondary">Habits Done</div>
+                  </div>
+                  <div className="text-center p-4 bg-warning/10 rounded-lg">
+                    <div className="text-3xl font-bold text-warning">
+                      {weekly_score?.metrics?.total_completions || 0}
+                    </div>
+                    <div className="text-xs text-secondary">Total</div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary">Last Week</span>
+                    <span className="font-medium">{weekly_score?.comparison?.last_week_total || 0} completions</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Week Info */}
+            <div className="card lg:col-span-2">
+              <div className="card-header">
+                <Calendar size={20} />
+                <h3 className="card-title">Week Overview</h3>
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between text-secondary">
+                  <span>Week: {weekly_score?.week?.start || '-'} to {weekly_score?.week?.end || '-'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'recommendations' && (
+          <div className="space-y-4">
+            {/* Priority 1 */}
+            {recommendations?.recommendations?.filter(r => r.priority <= 1).map((rec, idx) => (
+              <div key={idx} className={`card border-2 border-${getRiskColor(rec.type === 'critical' ? 'danger' : 'warning')}`}>
+                <div className="card-header">
+                  <span className={`badge badge-${getRiskColor(rec.type === 'critical' ? 'danger' : 'warning')}`}>
+                    PRIORITY {rec.priority}
+                  </span>
+                  <h3 className="card-title">{rec.title}</h3>
+                </div>
+                <div className="p-4">
+                  <p className="mb-4">{rec.message}</p>
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <span className="font-medium text-primary">💡 Action: </span>
+                    <span>{rec.action}</span>
+                  </div>
+                  {rec.expected_impact && (
+                    <p className="mt-3 text-sm text-secondary">
+                      Expected Impact: {rec.expected_impact}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Other Recommendations */}
+            {recommendations?.recommendations?.filter(r => r.priority > 1).slice(0, 5).map((rec, idx) => (
+              <div key={idx} className="card">
+                <div className="card-header">
+                  <h3 className="card-title">{rec.title}</h3>
+                  <span className={`badge badge-${getRiskColor(rec.type === 'celebration' ? 'success' : 'secondary')}`}>
+                    {rec.type}
+                  </span>
+                </div>
+                <div className="p-4">
+                  <p className="mb-2">{rec.message}</p>
+                  <p className="text-sm text-primary">💡 {rec.action}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Empty State */}
+            {(!recommendations?.recommendations || recommendations.recommendations.length === 0) && (
+              <div className="card">
+                <div className="p-8 text-center">
+                  <Target size={48} className="mx-auto mb-4 text-secondary opacity-50" />
+                  <p className="text-secondary">Start tracking habits to get personalized recommendations!</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

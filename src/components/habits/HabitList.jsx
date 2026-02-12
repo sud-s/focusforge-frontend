@@ -1,7 +1,7 @@
 import React from 'react';
 import HabitCard from './HabitCard';
 
-const HabitList = ({ habits, onLog, onDelete, onViewAnalytics }) => {
+const HabitList = ({ habits, onLog, onMiss, onLogDate, onDelete, onViewAnalytics }) => {
   if (!habits.length) {
     return <div className="text-center py-10 text-gray">No habits yet. Start by adding one!</div>;
   }
@@ -13,6 +13,8 @@ const HabitList = ({ habits, onLog, onDelete, onViewAnalytics }) => {
           key={habit.id} 
           habit={habit} 
           onLog={onLog} 
+          onMiss={onMiss}
+          onLogDate={onLogDate}
           onDelete={onDelete} 
           onViewAnalytics={onViewAnalytics} 
         />
