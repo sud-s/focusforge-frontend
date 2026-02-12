@@ -12,7 +12,7 @@ const Sidebar = () => {
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/habits', icon: CheckCircle, label: 'Habits' },
     { path: '/tasks', icon: ListTodo, label: 'Tasks' },
-    { path: '/ai-coach', icon: Sparkles, label: 'AI Coach' },
+    { path: '/ai-coach', icon: Sparkles, label: 'Discipline Coach' },
   ];
 
   return (
