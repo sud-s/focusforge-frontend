@@ -4,9 +4,9 @@ import '../../styles/cards.css';
 
 const StatsCard = ({ title, value, subtext, trend, icon: Icon, trendDirection = 'neutral' }) => {
   const getTrendColor = () => {
-    if (trendDirection === 'up') return 'text-green-500';
-    if (trendDirection === 'down') return 'text-red-500';
-    return 'text-gray-500';
+    if (trendDirection === 'up') return 'text-emerald-500 dark:text-emerald-400';
+    if (trendDirection === 'down') return 'text-red-500 dark:text-red-400';
+    return 'text-zinc-500 dark:text-zinc-400';
   };
 
   const TrendIcon = trendDirection === 'up' ? ArrowUp : trendDirection === 'down' ? ArrowDown : Minus;
@@ -14,22 +14,26 @@ const StatsCard = ({ title, value, subtext, trend, icon: Icon, trendDirection = 
   return (
     <div className="card stat-card">
       <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-gray text-sm font-medium">{title}</h3>
-          <div className="stat-value mt-2">{value}</div>
+        <div className="flex-1">
+          <h3 className="text-zinc-500 dark:text-zinc-400 text-xs font-normal">{title}</h3>
+          <div className="stat-value mt-1">{value}</div>
         </div>
-        {Icon && <div className="p-2 bg-blue-50 rounded-lg text-blue-500"><Icon size={24} /></div>}
+        {Icon && (
+          <div className="text-zinc-500 dark:text-zinc-400">
+            <Icon size={16} strokeWidth={1.5} />
+          </div>
+        )}
       </div>
       
       {(subtext || trend) && (
-        <div className="flex items-center gap-2 mt-2 text-sm">
+        <div className="flex items-center gap-1.5 mt-2">
           {trend && (
-            <span className={`flex items-center font-medium ${getTrendColor()}`}>
-              <TrendIcon size={14} className="mr-1" />
+            <span className={`flex items-center text-xs ${getTrendColor()}`}>
+              <TrendIcon size={10} className="mr-0.5" />
               {trend}
             </span>
           )}
-          {subtext && <span className="text-gray">{subtext}</span>}
+          {subtext && <span className="text-zinc-500 dark:text-zinc-400 text-xs">{subtext}</span>}
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ const Button = ({ children, variant = 'primary', onClick, icon: Icon, className 
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <Loader2 className="animate-spin" size={16} /> : Icon && <Icon size={18} />}
+      {loading ? <Loader2 className="animate-spin" size={12} /> : Icon && <Icon size={12} />}
       {children}
     </button>
   );

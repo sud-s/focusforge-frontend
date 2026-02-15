@@ -21,10 +21,10 @@ const AIInsights = ({ prediction, stats, habitName, suggestions }) => {
             <div 
               key={idx}
               className={`p-3 rounded-lg border ${
-                suggestion.type === 'warning' ? 'bg-amber-50 border-amber-200' :
-                suggestion.type === 'optimal_time' ? 'bg-blue-50 border-blue-200' :
-                suggestion.type === 'difficult_day' ? 'bg-red-50 border-red-200' :
-                suggestion.type === 'streak' ? 'bg-yellow-50 border-yellow-200' :
+                suggestion.type === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' :
+                suggestion.type === 'optimal_time' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' :
+                suggestion.type === 'difficult_day' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                suggestion.type === 'streak' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
                 'bg-purple-50 border-purple-200'
               }`}
             >
@@ -101,14 +101,14 @@ const AIInsights = ({ prediction, stats, habitName, suggestions }) => {
         {stats && (
           <div className="grid grid-cols-2 gap-3 mt-4">
             {stats.current_streak !== undefined && (
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-lg font-bold text-blue-600">{stats.current_streak}</div>
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{stats.current_streak}</div>
                 <div className="text-xs text-gray-500">Current Streak</div>
               </div>
             )}
             {stats.completion_rate !== undefined && (
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-lg font-bold text-green-600">{Math.round(stats.completion_rate * 100)}%</div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="text-lg font-bold text-green-600 dark:text-green-400">{Math.round(stats.completion_rate * 100)}%</div>
                 <div className="text-xs text-gray-500">Completion Rate</div>
               </div>
             )}

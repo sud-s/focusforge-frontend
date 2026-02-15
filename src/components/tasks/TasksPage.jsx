@@ -7,7 +7,7 @@ import { useUI } from '../../store/uiStore';
 import Loader from '../common/Loader';
 
 const TasksPage = () => {
-  const { tasks, loading, toggleTask, uncompleteTask, markTaskMissed, deleteTask } = useTasks();
+  const { tasks, loading, toggleTask, markTaskMissed, deleteTask } = useTasks();
   const { openModal } = useUI();
 
   const handleAddTask = () => {
@@ -15,17 +15,8 @@ const TasksPage = () => {
   };
 
   const handleToggleTask = (id) => {
-    // Find the task to see if it's completed
-    const task = tasks.find(t => (t.id || t._id) === id);
-    if (task) {
-      if (task.is_completed) {
-        // Reopen the task
-        uncompleteTask(id);
-      } else {
-        // Complete the task
-        toggleTask(id);
-      }
-    }
+    // Task can only be completed on its due_date
+    toggleTask(id);
   };
 
   const handleDeleteTask = (id) => {
@@ -34,7 +25,6 @@ const TasksPage = () => {
     }
   };
 
-  // Get today's date formatted
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -46,10 +36,10 @@ const TasksPage = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">My Tasks</h1>
-          <p className="text-gray">{todayFormatted}</p>
+          <h1 className="text-lg font-normal text-zinc-700 dark:text-zinc-200">Tasks</h1>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{todayFormatted}</p>
         </div>
-        <Button onClick={handleAddTask} icon={Plus}>Add Task</Button>
+        <Button onClick={handleAddTask} icon={Plus}>Add</Button>
       </div>
 
       {loading ? (

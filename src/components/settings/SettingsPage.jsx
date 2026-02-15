@@ -123,73 +123,71 @@ const SettingsPage = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <User className="text-primary" />
-          Settings
-        </h1>
-        <p className="text-gray">Manage your account settings and preferences.</p>
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-lg font-normal text-zinc-700 dark:text-zinc-200">Settings</h1>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Manage your account</p>
       </div>
 
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
-          <CheckCircle size={20} />
+        <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-green-700 dark:text-green-400 text-sm">
           {success}
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-          <AlertCircle size={20} />
+        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-sm">
           {error}
         </div>
       )}
 
       <div className="card">
-        <div className="flex border-b border-gray-200 overflow-x-auto">
+        <div className="flex border-b border-zinc-200 dark:border-zinc-800">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-normal transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'text-primary border-b-2 border-primary -mb-px'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-zinc-700 dark:text-zinc-200 border-b-2 border-primary -mb-px'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
               }`}
             >
-              <tab.icon size={18} />
+              <tab.icon size={12} />
               {tab.label}
             </button>
           ))}
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-auto">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Profile Information</h2>
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100">Profile Information</h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Update your personal details</p>
+              </div>
               
-              {/* Avatar Section - Telegram Style */}
-              <div className="flex items-center gap-6">
+              {/* Avatar Section - Modern Style */}
+              <div className="flex items-center gap-6 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
                 <div className="relative">
                   {avatarPreview ? (
                     <div className="relative">
                       <img 
                         src={avatarPreview} 
                         alt="Profile" 
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 shadow-md"
                       />
                       <button
                         onClick={handleRemoveAvatar}
-                        className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
                       >
-                        <X size={16} />
+                        <X size={12} />
                       </button>
                     </div>
                   ) : (
                     <div 
-                      className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-3xl font-bold shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-md cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {profileData.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -204,15 +202,15 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{profileData.name || 'Your Name'}</h3>
-                  <p className="text-gray text-sm">@{profileData.username || 'username'}</p>
+                  <h3 className="font-semibold text-lg text-zinc-800 dark:text-zinc-100">{profileData.name || 'Your Name'}</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">@{profileData.username || 'username'}</p>
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors"
                     >
-                      <Camera size={16} />
-                      Change Photo
+                      <Camera size={14} />
+                      Change
                     </button>
                   </div>
                 </div>
@@ -273,11 +271,14 @@ const SettingsPage = () => {
           {/* Security Tab */}
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Change Password</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Security</h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Manage your account security</p>
+              </div>
               
-              <div className="space-y-4 max-w-md">
+              <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Current Password</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-2">Current Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -288,7 +289,7 @@ const SettingsPage = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-2">New Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -299,7 +300,7 @@ const SettingsPage = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-2">Confirm New Password</label>
                   <input
                     type="password"
                     className="form-input"
@@ -320,43 +321,35 @@ const SettingsPage = () => {
 
           {/* Appearance Tab */}
           {activeTab === 'appearance' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Theme Settings</h2>
+            <div className="space-y-4">
+              <h2 className="text-sm font-normal text-zinc-500 dark:text-zinc-300">Theme</h2>
               
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex gap-3">
                 <div 
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    theme === 'light' ? 'border-primary bg-blue-50' : 'border-gray-200'
+                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    theme === 'light' 
+                      ? 'border-zinc-400 bg-zinc-100 dark:bg-zinc-800' 
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
                   onClick={() => setTheme('light')}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg shadow flex items-center justify-center">
-                      <Sun size={20} className="text-yellow-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Light Mode</p>
-                      <p className="text-sm text-gray-500">Clean and bright interface</p>
-                    </div>
-                    {theme === 'light' && <CheckCircle size={20} className="ml-auto text-primary" />}
+                  <div className="flex items-center gap-2">
+                    <Sun size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400">Light</span>
                   </div>
                 </div>
                 
                 <div 
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    theme === 'dark' ? 'border-primary bg-blue-50 dark:bg-gray-800' : 'border-gray-200'
+                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    theme === 'dark' 
+                      ? 'border-zinc-400 bg-zinc-100 dark:bg-zinc-800' 
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
                   onClick={() => setTheme('dark')}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-800 rounded-lg shadow flex items-center justify-center">
-                      <Moon size={20} className="text-yellow-300" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Dark Mode</p>
-                      <p className="text-sm text-gray-500">Easy on the eyes</p>
-                    </div>
-                    {theme === 'dark' && <CheckCircle size={20} className="ml-auto text-primary" />}
+                  <div className="flex items-center gap-2">
+                    <Moon size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400">Dark</span>
                   </div>
                 </div>
               </div>
@@ -366,52 +359,53 @@ const SettingsPage = () => {
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Notification Preferences</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Notifications</h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Manage your notification preferences</p>
+              </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Bell size={20} className="text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Email Notifications</p>
-                      <p className="text-sm text-gray-500">Receive updates via email</p>
-                    </div>
+              <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Bell size={16} className="text-purple-600 dark:text-purple-400" />
                   </div>
-                  <button
-                    onClick={toggleNotifications}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${
-                      notificationsEnabled ? 'bg-primary' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      notificationsEnabled ? 'left-7' : 'left-1'
-                    }`} />
-                  </button>
+                  <div>
+                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Push Notifications</span>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Receive notifications on your device</p>
+                  </div>
                 </div>
+                <button
+                  onClick={toggleNotifications}
+                  className="w-11 h-6 rounded-full relative transition-colors"
+                  style={{ backgroundColor: notificationsEnabled ? '#8b5cf6' : '#d4d4d8' }}
+                >
+                  <div 
+                    className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                    style={{ left: notificationsEnabled ? '22px' : '2px' }}
+                  />
+                </button>
+              </div>
 
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      {soundEnabled ? <Volume2 size={20} className="text-purple-600" /> : <VolumeX size={20} className="text-purple-600" />}
-                    </div>
-                    <div>
-                      <p className="font-medium">Sound Effects</p>
-                      <p className="text-sm text-gray-500">Play sounds for notifications</p>
-                    </div>
+              <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    {soundEnabled ? <Volume2 size={16} className="text-blue-600 dark:text-blue-400" /> : <VolumeX size={16} className="text-blue-600 dark:text-blue-400" />}
                   </div>
-                  <button
-                    onClick={toggleSound}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${
-                      soundEnabled ? 'bg-primary' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      soundEnabled ? 'left-7' : 'left-1'
-                    }`} />
-                  </button>
+                  <div>
+                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">Sound</span>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Play sound for notifications</p>
+                  </div>
                 </div>
+                <button
+                  onClick={toggleSound}
+                  className="w-11 h-6 rounded-full relative transition-colors"
+                  style={{ backgroundColor: soundEnabled ? '#8b5cf6' : '#d4d4d8' }}
+                >
+                  <div 
+                    className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                    style={{ left: soundEnabled ? '22px' : '2px' }}
+                  />
+                </button>
               </div>
             </div>
           )}

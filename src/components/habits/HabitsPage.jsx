@@ -19,13 +19,12 @@ const HabitsPage = () => {
   };
 
   const handleMissHabit = (habit) => {
-    if (window.confirm(`Mark "${habit.name || habit.title}" as missed today? This will reset your streak.`)) {
+    if (window.confirm(`Mark "${habit.name || habit.title}" as missed today?`)) {
       missHabit(habit.id);
     }
   };
 
   const handleLogDateClick = (habit) => {
-    // Open date/time picker modal
     const now = new Date();
     setSelectedDate(now.toISOString().split('T')[0]);
     setSelectedTime(now.toTimeString().slice(0, 5));
@@ -62,7 +61,6 @@ const HabitsPage = () => {
     console.log('View analytics for', habit.name || habit.title);
   };
 
-  // Get today's date formatted
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -74,10 +72,10 @@ const HabitsPage = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">My Habits</h1>
-          <p className="text-gray">{todayFormatted}</p>
+          <h1 className="text-lg font-normal text-zinc-700 dark:text-zinc-200">Habits</h1>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{todayFormatted}</p>
         </div>
-        <Button onClick={handleAddHabit} icon={Plus}>Add Habit</Button>
+        <Button onClick={handleAddHabit} icon={Plus}>Add</Button>
       </div>
 
       {loading ? (
@@ -100,32 +98,32 @@ const HabitsPage = () => {
         onClose={() => setLogDateModal(null)}
       >
         <div className="flex flex-col gap-4">
-          <p className="text-gray-600">
-            Logging: <strong>{logDateModal?.name || logDateModal?.title}</strong>
+          <p className="text-zinc-400 text-sm">
+            Logging: <strong className="text-zinc-200">{logDateModal?.name || logDateModal?.title}</strong>
           </p>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Date</label>
+            <label className="block text-xs text-zinc-500 mb-1">Date</label>
             <input 
               type="date" 
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 text-sm bg-zinc-900 border border-zinc-800 rounded text-zinc-200"
               max={new Date().toISOString().split('T')[0]}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Time (optional)</label>
+            <label className="block text-xs text-zinc-500 mb-1">Time (optional)</label>
             <input 
               type="time" 
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 text-sm bg-zinc-900 border border-zinc-800 rounded text-zinc-200"
             />
           </div>
           
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex justify-end gap-2 mt-2">
             <Button variant="secondary" onClick={() => setLogDateModal(null)}>Cancel</Button>
             <Button onClick={handleLogForDate}>Log</Button>
           </div>

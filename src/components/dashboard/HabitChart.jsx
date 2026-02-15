@@ -1,10 +1,13 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useHabits } from '../../store/habitStore';
+import { useUI } from '../../store/uiStore';
 import '../../styles/cards.css';
 
 const HabitChart = () => {
   const { habits } = useHabits();
+  const { theme } = useUI();
+  const isDark = theme === 'dark';
   
   // Generate weekly data from habits
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -16,6 +19,9 @@ const HabitChart = () => {
     ).length
   }));
 
+  const gridColor = isDark ? '#3f3f46' : '#e5e7eb';
+  const textColor = isDark ? '#a1a1aa' : '#6b7280';
+
   return (
     <div className="card h-full">
       <div className="card-header">
@@ -26,15 +32,22 @@ const HabitChart = () => {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-            <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-            <Tooltip />
-            <Area type="monotone" dataKey="completed" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCompleted)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: textColor, fontSize: 12}} />
+            <YAxis axisLine={false} tickLine={false} tick={{fill: textColor, fontSize: 12}} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: isDark ? '#18181b' : '#fff', 
+                border: `1px solid ${isDark ? '#3f3f46' : '#e5e7eb'}`,
+                borderRadius: '8px',
+                color: isDark ? '#e4e4e7' : '#18181b'
+              }} 
+            />
+            <Area type="monotone" dataKey="completed" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorCompleted)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

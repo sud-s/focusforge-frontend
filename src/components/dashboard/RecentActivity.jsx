@@ -85,40 +85,40 @@ const RecentActivity = () => {
         <h3 className="card-title">Recent Activity</h3>
       </div>
       {activities.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-zinc-400">
           <Clock size={32} className="mx-auto mb-2 opacity-50" />
           <p className="text-sm">No activity yet</p>
-          <p className="text-xs">Complete habits or tasks to see them here</p>
+          <p className="text-xs text-zinc-500">Complete habits or tasks to see them here</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {activities.map((activity) => (
             <div 
               key={activity.id} 
-              className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
             >
               <div 
-                className={`p-2 rounded-full ${
+                className={`p-1.5 rounded-full ${
                   activity.type === 'habit' 
-                    ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400' 
-                    : 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400'
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
+                    : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                 }`}
               >
-                {activity.type === 'habit' ? <CheckCircle size={16} /> : <ListTodo size={16} />}
+                {activity.type === 'habit' ? <CheckCircle size={14} /> : <ListTodo size={14} />}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{activity.title}</h4>
-                <p className="text-xs text-gray-500 flex items-center gap-1">
+                <h4 className="font-normal text-sm truncate text-zinc-700 dark:text-zinc-300">{activity.title}</h4>
+                <p className="text-xs text-zinc-400 flex items-center gap-1">
                   <Clock size={10} />
                   {activity.time}
                 </p>
               </div>
               {activity.status === 'completed' ? (
-                <span className="text-xs font-bold text-green-500 bg-green-50 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">
+                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">
                   Done
                 </span>
               ) : (
-                <span className="text-xs font-bold text-amber-500 bg-amber-50 dark:bg-amber-900 dark:text-amber-400 px-2 py-1 rounded">
+                <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
                   Pending
                 </span>
               )}

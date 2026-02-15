@@ -54,10 +54,10 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
 
   const getPriorityColor = (p) => {
     switch(p) {
-      case 'high': return 'bg-red-100 text-red-600';
-      case 'medium': return 'bg-yellow-100 text-yellow-600';
-      case 'low': return 'bg-green-100 text-green-600';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'high': return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400';
+      case 'low': return 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -80,7 +80,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
         alignItems: 'center',
         gap: '16px',
         padding: '16px',
-        backgroundColor: isCompleted ? '#f0fdf4' : 'var(--card-bg)',
+        backgroundColor: isCompleted ? 'var(--bg-card)' : 'var(--card-bg)',
         borderRadius: '12px',
         border: isOverdue() ? '1px solid #ef4444' : '1px solid var(--border-color)',
         marginBottom: '12px',
@@ -96,8 +96,8 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
           height: '32px',
           minWidth: '32px',
           borderRadius: '8px',
-          border: isCompleted ? 'none' : '2px solid #d1d5db',
-          backgroundColor: isCompleted ? '#22c55e' : '#ffffff',
+          border: isCompleted ? 'none' : '2px solid var(--border-color)',
+          backgroundColor: isCompleted ? '#22c55e' : 'var(--bg-card)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -110,7 +110,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
         {isCompleted ? (
           <CheckSquare size={20} color="white" />
         ) : (
-          <Square size={16} color="#9ca3af" />
+          <Square size={16} color="var(--text-secondary)" />
         )}
       </button>
       
@@ -120,7 +120,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
           fontSize: '16px',
           fontWeight: 500,
           margin: 0,
-          color: isCompleted ? '#9ca3af' : '#1f2937',
+          color: isCompleted ? 'var(--text-muted)' : 'var(--text-primary)',
           textDecoration: isCompleted ? 'line-through' : 'none'
         }}>
           {task.title}
@@ -139,7 +139,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
             display: 'flex', 
             alignItems: 'center', 
             gap: '4px',
-            color: isOverdue() ? '#ef4444' : '#6b7280',
+            color: isOverdue() ? '#ef4444' : 'var(--text-secondary)',
             fontWeight: isOverdue() ? 600 : 400
           }}>
             <Calendar size={12} />
@@ -165,7 +165,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
               display: 'flex', 
               alignItems: 'center', 
               gap: '4px', 
-              color: '#16a34a', 
+              color: '#22c55e', 
               fontWeight: 500 
             }}>
               <CheckCircle size={12} />
@@ -197,13 +197,13 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
           borderRadius: '6px',
           border: 'none',
           backgroundColor: 'transparent',
-          color: '#9ca3af',
+          color: 'var(--text-muted)',
           cursor: 'pointer',
           transition: 'all 0.2s ease'
         }}
         title="Delete task"
         onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
-        onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
+        onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
       >
         <Trash2 size={18} />
       </button>

@@ -1,0 +1,9 @@
+<svg width="143" height="245" viewBox="0 0 143 245" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6" />
+      <stop offset="100%" style="stop-color:#8B5CF6" />
+    </linearGradient>
+  </defs>
+  <path d="M64.2979 214.958L0 244.275V30.625L8.17871 26.8994L64.2979 1.29102V214.958ZM78.791 75.0303L143 104.312V163.216L82.8525 135.789L78.791 133.936V75.0303ZM143 29.2822V88.3965L86.6162 62.6777L78.791 59.1016V0L143 29.2822Z" fill="url(#logoGradient)"/>
+</svg>

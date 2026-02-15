@@ -1,8 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckCircle, ListTodo, User, Settings, LogOut, Hexagon, Sparkles, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, CheckCircle, ListTodo, Settings, LogOut, Sparkles, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../store/authStore';
 import { useUI } from '../../store/uiStore';
+import UnionLogo from '../../Union.svg';
 
 const Sidebar = () => {
   const { logout } = useAuth();
@@ -12,13 +13,17 @@ const Sidebar = () => {
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/habits', icon: CheckCircle, label: 'Habits' },
     { path: '/tasks', icon: ListTodo, label: 'Tasks' },
-    { path: '/ai-coach', icon: Sparkles, label: 'Discipline Coach' },
+    { path: '/ai-coach', icon: Sparkles, label: 'Coach' },
   ];
 
   return (
-    <aside className="sidebar overflow-y-auto">
+    <aside className="sidebar">
       <div className="sidebar-header">
-        <Hexagon size={32} />
+        <img 
+          src={UnionLogo} 
+          alt="FocusForge" 
+          className="w-4 h-auto"
+        />
         <span>FocusForge</span>
       </div>
       
@@ -29,37 +34,36 @@ const Sidebar = () => {
             to={item.path}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
-            <item.icon size={20} />
+            <item.icon size={14} />
             <span>{item.label}</span>
           </NavLink>
         ))}
         
         <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Settings size={20} />
+          <Settings size={14} />
           <span>Settings</span>
         </NavLink>
         
-        {/* Dark/Light Mode Toggle */}
+        {/* Theme Toggle */}
         <button 
           onClick={toggleTheme} 
           className="nav-item w-full text-left"
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           {theme === 'dark' ? (
             <>
-              <Sun size={20} className="text-yellow-400" />
-              <span>Light Mode</span>
+              <Sun size={14} />
+              <span>Light</span>
             </>
           ) : (
             <>
-              <Moon size={20} className="text-indigo-400" />
-              <span>Dark Mode</span>
+              <Moon size={14} />
+              <span>Dark</span>
             </>
           )}
         </button>
         
-        <button onClick={logout} className="nav-item w-full text-left mt-auto">
-          <LogOut size={20} />
+        <button onClick={logout} className="nav-item w-full text-left mt-auto text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">
+          <LogOut size={14} />
           <span>Logout</span>
         </button>
       </nav>

@@ -4,27 +4,33 @@
 
 .form-label {
   display: block;
-  margin-bottom: var(--spacing-xs);
-  font-weight: 500;
-  color: var(--text-primary);
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 .form-input {
   width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid var(--border-color);
+  padding: 8px 10px;
+  border: 0.5px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 1rem;
+  font-size: 0.8125rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
   transition: border-color var(--transition-fast);
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px;
 }

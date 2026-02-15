@@ -50,7 +50,7 @@ const HabitCard = ({ habit, onLog, onMiss, onDelete, onViewAnalytics, onLogDate 
     if (missedToday) {
       return 'bg-danger/20 text-danger';
     }
-    return 'bg-orange-100 text-orange-500';
+    return 'bg-orange-500/20 dark:bg-orange-500/30 text-orange-600 dark:text-orange-400';
   };
 
   // Status message
@@ -73,8 +73,8 @@ const HabitCard = ({ habit, onLog, onMiss, onDelete, onViewAnalytics, onLogDate 
           </div>
           <div>
             <h3 className="font-bold text-lg">{habitName}</h3>
-            <div className="flex items-center gap-2 text-sm text-gray">
-              <Flame size={14} className={streak > 0 ? 'text-orange-500' : 'text-gray-400'} />
+            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+              <Flame size={14} className={streak > 0 ? 'text-orange-500 dark:text-orange-400' : 'text-zinc-400 dark:text-zinc-600'} />
               <span>{getStatusMessage()}</span>
             </div>
           </div>
@@ -85,7 +85,7 @@ const HabitCard = ({ habit, onLog, onMiss, onDelete, onViewAnalytics, onLogDate 
       </div>
       
       {/* Progress Bar */}
-      <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
+      <div className="w-full bg-zinc-100 dark:bg-zinc-700 rounded-full h-2 mb-4">
         <div 
           className={`h-2 rounded-full transition-all duration-300 ${
             completedToday ? 'bg-success' : 
@@ -105,7 +105,7 @@ const HabitCard = ({ habit, onLog, onMiss, onDelete, onViewAnalytics, onLogDate 
       )}
       
       {dueDate && !completedAt && (
-        <div className="mb-3 p-2 bg-gray-100 rounded-lg flex items-center gap-2 text-xs text-gray-500">
+        <div className="mb-3 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <Clock size={12} />
           Due: {formatDate(dueDate)}
         </div>

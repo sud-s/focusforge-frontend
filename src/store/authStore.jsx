@@ -13,6 +13,8 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
+        // TEMPORARILY DISABLED AUTH FOR DEMO - Sets default user
+        setUser({ id: 1, username: 'demo_user', email: 'demo@example.com' });
         setLoading(false);
         return;
       }
@@ -22,7 +24,8 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         console.error('Failed to fetch user', err);
         localStorage.removeItem('token');
-        setUser(null);
+        // TEMPORARILY DISABLED AUTH FOR DEMO - Sets default user on error
+        setUser({ id: 1, username: 'demo_user', email: 'demo@example.com' });
       } finally {
         setLoading(false);
       }

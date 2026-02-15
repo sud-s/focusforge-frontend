@@ -2,13 +2,27 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UIContext = createContext();
 
-// Get saved theme from localStorage or default to light
+// Get saved theme from localStorage or default to dark
 const getInitialTheme = () => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('focusforge_theme');
     if (saved) return saved;
   }
-  return 'light'; // Default to light mode
+  return 'dark'; // Default to dark mode for modern SaaS look
+};
+
+// Apply theme to document
+const applyTheme = (theme) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    // Also toggle the 'dark' class for Tailwind's dark: prefix to work
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
 };
 
 export const UIProvider = ({ children }) => {
@@ -31,9 +45,8 @@ export const UIProvider = ({ children }) => {
 
   // Apply theme on initial load
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.body.setAttribute('data-theme', theme);
-  }, [theme]);
+    applyTheme(theme);
+  }, []);
 
   const openModal = (modalName, data = null) => {
     setActiveModal(modalName);
@@ -51,8 +64,7 @@ export const UIProvider = ({ children }) => {
     setTheme(prev => {
       const newTheme = prev === 'light' ? 'dark' : 'light';
       localStorage.setItem('focusforge_theme', newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
-      document.body.setAttribute('data-theme', newTheme);
+      applyTheme(newTheme);
       return newTheme;
     });
   };
@@ -60,8 +72,7 @@ export const UIProvider = ({ children }) => {
   const setThemeDirect = (newTheme) => {
     localStorage.setItem('focusforge_theme', newTheme);
     setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    document.body.setAttribute('data-theme', newTheme);
+    applyTheme(newTheme);
   };
 
   const toggleNotifications = () => {

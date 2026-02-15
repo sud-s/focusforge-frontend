@@ -2,63 +2,51 @@ import React from 'react';
 import { Bell, BellRing } from 'lucide-react';
 import { useAuth } from '../../store/authStore';
 import { useUI } from '../../store/uiStore';
-import '../../styles/layout.css';
 
 const Topbar = () => {
   const { user } = useAuth();
-  const { notificationsEnabled } = useUI();
+  const { notificationsEnabled, theme } = useUI();
+  const isDark = theme === 'dark';
 
-  // Get display name - show username or full name
   const displayName = user?.username || user?.name || 'User';
   const initials = displayName.charAt(0).toUpperCase();
   
-  // Get avatar URL if available
   const avatarUrl = user?.avatar_url || user?.profile_photo || null;
 
   return (
     <header className="topbar">
-      {/* Left side - Page title will be handled by the page */}
       <div></div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Notifications */}
         <button 
-          className={`relative p-2 rounded-full transition-all ${
+          className={`p-1.5 rounded transition-all ${
             notificationsEnabled 
-              ? 'bg-primary-100 text-primary dark:bg-primary-900 dark:text-primary-300' 
-              : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'text-zinc-400' 
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
           }`}
-          title={notificationsEnabled ? 'Notifications enabled' : 'Notifications disabled'}
         >
-          {notificationsEnabled ? <BellRing size={20} /> : <Bell size={20} />}
-          {notificationsEnabled && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          )}
+          {notificationsEnabled ? <BellRing size={14} /> : <Bell size={14} />}
         </button>
         
-        {/* Profile - Telegram-style */}
-        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700">
-          {/* Avatar */}
+        {/* Profile */}
+        <div className="flex items-center gap-2 pl-3 border-l border-zinc-200 dark:border-zinc-800">
           <div className="relative">
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
                 alt={displayName}
-                className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow"
+                className="w-5 h-5 rounded-full"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold shadow-lg">
+              <div className="w-5 h-5 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-[10px] text-zinc-700 dark:text-zinc-300">
                 {initials}
               </div>
             )}
-            {/* Online indicator */}
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
           </div>
           
-          {/* User info */}
           <div className="hidden md:block">
-            <p className="text-sm font-semibold">{displayName}</p>
-            <p className="text-xs text-gray-500">@{user?.username || 'user'}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{displayName}</p>
           </div>
         </div>
       </div>
